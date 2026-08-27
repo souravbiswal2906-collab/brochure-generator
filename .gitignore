@@ -1,0 +1,23 @@
+# Secrets - the single most important line in this file
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+
+# Generated brochures
+*.md
+!README.md
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
