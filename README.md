@@ -65,6 +65,72 @@ python -m src.cli summarize https://anthropic.com
 | `-o out.md` | Saves the brochure to a file as well as printing it |
 | `--no-stream` | Waits for the complete reply instead of streaming |
 
+### Sample output
+
+Real output from `python -m src.cli brochure "Anthropic" https://anthropic.com`,
+generated in about 30 seconds for roughly a fifth of a cent.
+
+<details>
+<summary>Click to expand the generated brochure</summary>
+
+> # Anthropic Brochure
+>
+> ## Who We Are
+>
+> Anthropic is a public benefit corporation focused on AI safety and research.
+> We are dedicated to building AI systems that people can rely on by ensuring
+> they are safe, interpretable, and steerable. With AI's vast potential impact
+> on the world, we commit to securing its benefits while mitigating risks.
+>
+> ## What We Do
+>
+> - **AI Research and Safety:** We tackle the hardest questions about AI across
+>   safety, governance, and societal and economic impacts.
+> - **Frontier AI Systems:** We develop advanced AI models such as Opus 5,
+>   which represents a significant leap in coding capability, agent
+>   sophistication, and professional application performance.
+> - **Systematic Safety Science:** Our approach treats AI safety as a rigorous
+>   scientific discipline. We conduct cutting-edge research, integrate findings
+>   into our products, and share our insights transparently.
+> - **Product Deployment:** Our technologies are brought to users through
+>   partnerships and practical products, including the Claude family of AI
+>   models and related applications.
+>
+> ## Our Culture and Mission
+>
+> - **Built on Hard Questions:** Anthropic thrives on addressing the
+>   challenging and complex questions surrounding AI's safe development and
+>   deployment.
+> - **Public Benefit Focus:** As a public benefit corporation, we align our
+>   goals with positive societal impact rather than solely commercial
+>   interests.
+> - **Transparency and Collaboration:** We maintain an open approach to
+>   research and policy, actively sharing knowledge to foster trust and
+>   responsible AI innovation.
+>
+> ## Our Customers
+>
+> Anthropic serves organizations and developers who require AI systems that are
+> not only powerful but also reliable and safe for real-world applications.
+>
+> ## Join Our Team
+>
+> We are growing and looking for talented individuals passionate about AI
+> safety, research, and engineering.
+
+</details>
+
+Worth noticing what the model did here. It never saw a page called "Our
+Culture" or "Our Customers"; it inferred those sections from the About and
+Careers pages that step 2 selected. That is the two-step design paying off. A
+single-shot scrape of the whole site would have spent most of its input budget
+on navigation and footers instead.
+
+Worth noticing what it got wrong, too. Details like model names and version
+numbers come from whatever the site said on the day it was scraped, and the
+model will happily state them with more confidence than they deserve. Check
+anything factual before you put a brochure in front of someone.
+
 ---
 
 ## Product thinking
@@ -219,25 +285,84 @@ expensive one handles only the part that needs it.
 
 You need Python 3.10 or newer and an OpenAI API key.
 
+On Windows the command is usually `python`; on Mac and Linux it is `python3`.
+Use whichever works on your machine, consistently.
+
+**1. Get the code**
+
 ```bash
-# 1. Get the code
 git clone https://github.com/YOUR-USERNAME/brochure-generator.git
 cd brochure-generator
+```
 
-# 2. Make a virtual environment
-python -m venv .venv
+**2. Check your Python version**
+
+```bash
+python3 --version
+```
+
+Anything from 3.10 up is fine.
+
+**3. Create a virtual environment**
+
+```bash
+python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
+```
 
-# 3. Install dependencies
+This keeps the project's libraries separate from the rest of your system.
+Your prompt should now begin with `(.venv)`. You need to run the activate
+line again in every new terminal session.
+
+**4. Install dependencies**
+
+```bash
 pip install -r requirements.txt
+```
 
-# 4. Add your key
+**5. Add your API key**
+
+```bash
 cp .env.example .env             # Windows: copy .env.example .env
-# then open .env and paste your key in
+```
 
-# 5. Run it
+Open `.env` and replace the placeholder with your real key from
+[platform.openai.com/api-keys](https://platform.openai.com/api-keys). No
+quotes, no spaces around the `=`:
+
+```
+OPENAI_API_KEY=sk-proj-your-actual-key
+```
+
+**6. Run the tests**
+
+```bash
+pytest
+```
+
+You should see `9 passed`. These need no key and no internet, so a failure
+here points at the install rather than at your key.
+
+**7. Run it**
+
+```bash
 python -m src.cli brochure "HuggingFace" https://huggingface.co
 ```
+
+It reads the landing page, reports how many links it found, lists the pages it
+picked, then streams the brochure. Expect 20 to 40 seconds and about a fifth
+of a cent.
+
+### If something goes wrong
+
+| Message | Cause |
+|---|---|
+| `No module named src` | Wrong folder. Be in `brochure-generator`, the folder that *contains* `src`. |
+| `No OPENAI_API_KEY found` | The `.env` file is missing, misnamed, or the key line is malformed. Windows Notepad silently saves `.env.txt`. |
+| `401` from OpenAI | The key is wrong, revoked, or the account has no credit. |
+| Brochure is empty or very thin | The site is JavaScript-rendered. See Known limitations below. |
+
+### A note on your key
 
 Your key lives in `.env`, which is listed in `.gitignore` and will never be
 committed. Never put a key directly in a source file. Keys pushed to GitHub
@@ -281,3 +406,29 @@ way.
 
 ---
 
+## Known limitations
+
+- **JavaScript-rendered sites return little or nothing.** `requests` fetches
+  HTML, it does not run a browser. Sites built with React or similar will look
+  empty. Fixing this properly means Playwright or Selenium.
+- **The model can hallucinate.** The prompt says not to invent facts, which
+  helps and does not guarantee. Read before you send anything to a client.
+- **No `robots.txt` checking.** Be considerate about what you scrape and how
+  often.
+- **English-centred prompts.** They work in other languages but were not
+  tuned for them.
+
+---
+
+## Credits
+
+The original code is from **Week 1 of the
+[LLM Engineering course](https://github.com/ed-donner/llm_engineering) by
+Ed Donner**, used under the MIT License. The core idea, using an LLM to pick
+which links to read before writing, is his.
+
+This repository restructures that notebook code into a tested command line
+application, fixes the double-fetch and relative-link issues, adds error
+handling and a two-model cost strategy, and documents the reasoning.
+
+Licensed under the MIT License. See [LICENSE](LICENSE).
