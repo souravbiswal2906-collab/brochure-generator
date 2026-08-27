@@ -281,29 +281,3 @@ way.
 
 ---
 
-## Known limitations
-
-- **JavaScript-rendered sites return little or nothing.** `requests` fetches
-  HTML, it does not run a browser. Sites built with React or similar will look
-  empty. Fixing this properly means Playwright or Selenium.
-- **The model can hallucinate.** The prompt says not to invent facts, which
-  helps and does not guarantee. Read before you send anything to a client.
-- **No `robots.txt` checking.** Be considerate about what you scrape and how
-  often.
-- **English-centred prompts.** They work in other languages but were not
-  tuned for them.
-
----
-
-## Credits
-
-The original code is from **Week 1 of the
-[LLM Engineering course](https://github.com/ed-donner/llm_engineering) by
-Ed Donner**, used under the MIT License. The core idea, using an LLM to pick
-which links to read before writing, is his.
-
-This repository restructures that notebook code into a tested command line
-application, fixes the double-fetch and relative-link issues, adds error
-handling and a two-model cost strategy, and documents the reasoning.
-
-Licensed under the MIT License. See [LICENSE](LICENSE).
